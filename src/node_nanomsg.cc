@@ -18,6 +18,7 @@ using v8::Function;
 using v8::FunctionTemplate;
 using v8::Handle;
 using v8::Local;
+using v8::Persistent;
 using v8::Number;
 using v8::Object;
 using v8::String;
@@ -125,9 +126,77 @@ NAN_METHOD(Getsockopt) {
     NanReturnValue(obj);
 }
 
+struct BindState {
+    BindState(int sock_, Handle<Function> cb_, Handle<String> addr_) : addr(addr_) {
+        sock = sock_;
+        NanAssignPersistent(cb, cb_);
+        error = 0;
+    }
+
+    ~BindState() {
+        NanDisposePersistent(cb);
+    }
+
+    int sock;
+    Persistent<Function> cb;
+    String::Utf8Value addr;
+    int error;
+};
+
+void UV_BindAsync(uv_work_t *req) {
+    BindState *state = static_cast<BindState *>(req->data);
+    if (nn_bind(state->sock, *state->addr) < 0) {
+        state->error = nn_errno();
+    }
+}
+
+void UV_BindAsyncAfter(uv_work_t *req) {
+    BindState *state = static_cast<BindState *>(req->data);
+    NanScope();
+    Local<Value> argv[1];
+    if (state->error) {
+        argv[0] = NanError(nn_strerror(state->error));
+    } else {
+        argv[0] = NanUndefined();
+    }
+    Local<Function> cb = NanNew(state->cb);
+    NanMakeCallback(NanGetCurrentContext()->Global(), cb, 1, argv);
+    delete state;
+    delete req;
+}
 
 NAN_METHOD(Bind) {
     NanScope();
+    if (!args[0]->IsNumber()) {
+        return NanThrowTypeError("Socket must be a number!");
+    }
+    if (!args[1]->IsString()) {
+        return NanThrowTypeError("Address must be a string!");
+    }
+    if (args.Length() > 2 && !args[2]->IsFunction()) {
+        return NanThrowTypeError("Callback must be a function!");
+    }
+
+    int s = args[0]->Uint32Value();
+    Local<String> addr = args[1].As<String>();
+    Local<Function> cb = Local<Function>::Cast(args[2]);
+
+    BindState *state = new BindState(s, cb, addr);
+    uv_work_t *req = new uv_work_t;
+    req->data = state;
+    uv_queue_work(uv_default_loop(), req, UV_BindAsync, (uv_after_work_cb)UV_BindAsyncAfter);
+
+    NanReturnUndefined();
+}
+
+NAN_METHOD(BindSync) {
+    NanScope();
+    if (!args[0]->IsNumber()) {
+        return NanThrowTypeError("Socket must be a number!");
+    }
+    if (!args[1]->IsString()) {
+        return NanThrowTypeError("Address must be a string!");
+    }
 
     int s = args[0]->Uint32Value();
     String::Utf8Value addr(args[1]);
@@ -138,9 +207,35 @@ NAN_METHOD(Bind) {
     NanReturnValue(NanNew<Number>(ret));
 }
 
-
 NAN_METHOD(Connect) {
     NanScope();
+    if (!args[0]->IsNumber()) {
+        return NanThrowTypeError("Socket must be a number!");
+    }
+    if (!args[1]->IsString()) {
+        return NanThrowTypeError("Address must be a string!");
+    }
+    if (args.Length() > 2 && !args[2]->IsFunction()) {
+        return NanThrowTypeError("Callback must be a function!");
+    }
+
+    int s = args[0]->Uint32Value();
+    String::Utf8Value addr(args[1]);
+
+    // Invoke nanomsg function.
+    int ret = nn_connect(s, *addr);
+
+    NanReturnValue(NanNew<Number>(ret));
+}
+
+NAN_METHOD(ConnectSync) {
+    NanScope();
+    if (!args[0]->IsNumber()) {
+        return NanThrowTypeError("Socket must be a number!");
+    }
+    if (!args[1]->IsString()) {
+        return NanThrowTypeError("Address must be a string!");
+    }
 
     int s = args[0]->Uint32Value();
     String::Utf8Value addr(args[1]);
@@ -420,7 +515,9 @@ void InitAll(Handle<Object> exports) {
     EXPORT_METHOD(exports, Setsockopt);
     EXPORT_METHOD(exports, Getsockopt);
     EXPORT_METHOD(exports, Bind);
+    EXPORT_METHOD(exports, BindSync);
     EXPORT_METHOD(exports, Connect);
+    EXPORT_METHOD(exports, ConnectSync);
     EXPORT_METHOD(exports, Shutdown);
     EXPORT_METHOD(exports, Send);
     EXPORT_METHOD(exports, Recv);

@@ -11,7 +11,7 @@ test('shutdown on valid endpoint returns 0', function (t) {
     t.plan(1);
 
     var sock = nano.socket('pub');
-    var ep = sock.bind('inproc://some_endpoint');
+    var ep = sock.bindSync('inproc://some_endpoint');
     var rc = sock.shutdown(ep);
     t.equal(rc, 0);
     sock.close();

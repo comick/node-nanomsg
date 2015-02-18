@@ -18,10 +18,10 @@ test('inproc socket survey', function (t) {
     var msg1 = 'knock knock';
     var msg2 = "who's there?";
 
-    sur.bind(addr);
-    rep1.connect(addr);
-    rep2.connect(addr);
-    rep3.connect(addr);
+    sur.bindSync(addr);
+    rep1.connectSync(addr);
+    rep2.connectSync(addr);
+    rep3.connectSync(addr);
 
     function answer (buf) {
         this.send(msg2);

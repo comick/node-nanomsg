@@ -21,8 +21,8 @@ test('create bidirectional device with two sockets', function (t) {
     var msg1 = "Hello";
     var msg2 = "World";
 
-    r1.bind(addr1);
-    r2.bind(addr2);
+    r1.bindSync(addr1);
+    r2.bindSync(addr2);
 
     var d = nano.device(r1, r2);
 
@@ -36,8 +36,8 @@ test('create bidirectional device with two sockets', function (t) {
     var s1 = nano.socket('pair');
     var s2 = nano.socket('pair');
 
-    s1.connect(addr1);
-    s2.connect(addr2);
+    s1.connectSync(addr1);
+    s2.connectSync(addr2);
 
     s1.on('message', function (buf) {
         t.equal(buf.toString(), msg2);

@@ -12,7 +12,7 @@ test('send returns number of bytes sent for bound socket', function (t) {
     t.plan(1);
 
     var sock = nano.socket('pub');
-    sock.bind('inproc://some_address');
+    sock.bindSync('inproc://some_address');
     var rc = sock.send('ABC');
     t.equal(rc, 3);
     sock.close();

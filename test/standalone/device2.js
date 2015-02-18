@@ -20,8 +20,8 @@ test('create unidirectional device with two sockets', function (t) {
     var addr2 = 'inproc://device2';
     var msg = "Hello";
 
-    r1.bind(addr1);
-    r2.bind(addr2);
+    r1.bindSync(addr1);
+    r2.bindSync(addr2);
 
     var d = nano.device(r1, r2);
 
@@ -35,8 +35,8 @@ test('create unidirectional device with two sockets', function (t) {
     var s1 = nano.socket('push');
     var s2 = nano.socket('pull');
 
-    s1.connect(addr1);
-    s2.connect(addr2);
+    s1.connectSync(addr1);
+    s2.connectSync(addr2);
 
     s2.on('message', function (buf) {
         t.equal(buf.toString(), msg);

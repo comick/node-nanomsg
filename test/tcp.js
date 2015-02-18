@@ -18,8 +18,8 @@ test('tcp socket pub sub', function (t) {
     var addr = 'tcp://127.0.0.1:6000';
     var msg = 'hello world';
 
-    pub.bind(addr);
-    sub.connect(addr);
+    pub.bindSync(addr);
+    sub.connectSync(addr);
 
     sub.on('message', function (buf) {
         t.equal(buf.toString(), msg);
@@ -42,8 +42,8 @@ test('tcp socket pairs', function (t) {
     var addr = 'tcp://127.0.0.1:6000';
     var msg = 'hello world';
 
-    s1.bind(addr);
-    s2.connect(addr);
+    s1.bindSync(addr);
+    s2.connectSync(addr);
 
     s1.on('message', function (buf) {
         t.equal(buf.toString(), msg);
@@ -67,8 +67,8 @@ test('tcp socket req rep', function (t) {
     var msg1 = 'knock knock';
     var msg2 = "who's there?";
 
-    rep.bind(addr);
-    req.connect(addr);
+    rep.bindSync(addr);
+    req.connectSync(addr);
 
     rep.on('message', function (buf) {
         t.equal(buf.toString(), msg1, 'request received');
@@ -99,10 +99,10 @@ test('tcp socket survey', function (t) {
     var msg1 = 'knock knock';
     var msg2 = "who's there?";
 
-    sur.bind(addr);
-    rep1.connect(addr);
-    rep2.connect(addr);
-    rep3.connect(addr);
+    sur.bindSync(addr);
+    rep1.connectSync(addr);
+    rep2.connectSync(addr);
+    rep3.connectSync(addr);
 
     function answer (buf) {
         this.send(msg2);
@@ -142,7 +142,7 @@ test('tcp socket bus', function (t) {
         (function (i) {
             var bus = nano.socket('bus');
             var addr = 'tcp://127.0.0.1:' + (6000 + i);
-            bus.bind(addr);
+            bus.bindSync(addr);
             buses[addr] = bus;
 
             // Add a "response count" for each bus.
@@ -176,8 +176,8 @@ test('tcp socket bus', function (t) {
 
         for (var i = 0; i < keys.length; i++) {
             for (var j = i+1; j < keys.length; j++) {
-                console.error('#', 'connecting', keys[i], 'to', keys[j]);
-                buses[keys[i]].connect(keys[j]);
+                console.error('#', 'connectSyncing', keys[i], 'to', keys[j]);
+                buses[keys[i]].connectSync(keys[j]);
             }
         }
     }, 500);
@@ -202,10 +202,10 @@ test('inproc multiple socket pub sub', function (t) {
     var addr = 'tcp://127.0.0.1:6000';
     var msg = 'hello world';
 
-    pub.bind(addr);
-    sub1.connect(addr);
-    sub2.connect(addr);
-    sub3.connect(addr);
+    pub.bindSync(addr);
+    sub1.connectSync(addr);
+    sub2.connectSync(addr);
+    sub3.connectSync(addr);
 
     var responses = 0;
 

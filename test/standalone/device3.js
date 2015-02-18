@@ -18,7 +18,7 @@ test('create loopback device with one socket', function (t) {
     var addr = 'inproc://device1';
     var msg = "Hello";
 
-    r1.bind(addr);
+    r1.bindSync(addr);
 
     var d = nano.device(r1);
 
@@ -31,8 +31,8 @@ test('create loopback device with one socket', function (t) {
     var s1 = nano.socket('bus');
     var s2 = nano.socket('bus');
 
-    s1.connect(addr);
-    s2.connect(addr);
+    s1.connectSync(addr);
+    s2.connectSync(addr);
 
     s2.on('message', function (buf) {
         t.equal(buf.toString(), msg);

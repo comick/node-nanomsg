@@ -25,8 +25,8 @@ test('inproc socket pub sub', function (t) {
     var addr = 'inproc://pubsub';
     var msg = 'hello world';
 
-    pub.bind(addr);
-    sub.connect(addr);
+    pub.bindSync(addr);
+    sub.connectSync(addr);
 
     sub.on('message', function (buf) {
         t.equal(buf.slice(2).toString(), msg);
