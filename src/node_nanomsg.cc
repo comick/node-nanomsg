@@ -131,6 +131,7 @@ struct BindState {
         sock = sock_;
         NanAssignPersistent(cb, cb_);
         error = 0;
+        endpoint = 0;
     }
 
     ~BindState() {
@@ -141,11 +142,13 @@ struct BindState {
     Persistent<Function> cb;
     String::Utf8Value addr;
     int error;
+    int endpoint;
 };
 
 void UV_BindAsync(uv_work_t *req) {
     BindState *state = static_cast<BindState *>(req->data);
-    if (nn_bind(state->sock, *state->addr) < 0) {
+    int ep = nn_bind(state->sock, *state->addr);
+    if (ep < 0) {
         state->error = nn_errno();
     }
 }
@@ -153,14 +156,16 @@ void UV_BindAsync(uv_work_t *req) {
 void UV_BindAsyncAfter(uv_work_t *req) {
     BindState *state = static_cast<BindState *>(req->data);
     NanScope();
-    Local<Value> argv[1];
+    Local<Value> argv[2];
     if (state->error) {
-        argv[0] = NanError(nn_strerror(state->error));
-    } else {
         argv[0] = NanUndefined();
+        argv[1] = NanError(nn_strerror(state->error));
+    } else {
+        argv[0] = NanNew<Number>(state->endpoint);
+        argv[1] = NanUndefined();
     }
     Local<Function> cb = NanNew(state->cb);
-    NanMakeCallback(NanGetCurrentContext()->Global(), cb, 1, argv);
+    NanMakeCallback(NanGetCurrentContext()->Global(), cb, 2, argv);
     delete state;
     delete req;
 }
